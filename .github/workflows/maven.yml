@@ -1,7 +1,4 @@
-# This workflow will build a package using Maven and then publish it to GitHub packages when a release is created.
-# For more information see: https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#apache-maven-with-a-settings-path
-
-name: Build, Deploy, and Upload Artifacts.
+name: Java CI with Maven, SonarQube, and Production Deployment
 
 on:
   push:
@@ -11,22 +8,65 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Trigger deploy to production'
+        required: true
+        default: 'false'
 
 jobs:
-  build:
-    runs-on: [self-hosted, staging]
-      - name: Configure Maven settings
+  # Parallel Job: Build and Test on Self-Hosted EC2 (with Tomcat installed)
+  build_and_test:
+    # This job will run on a self-hosted runner with the "staging" label.
+    # Ensure your self-hosted runner for staging has the label `staging` assigned to it.
+    runs-on: [self-hosted, staging]  # Self-hosted EC2 with Tomcat installed (Staging)
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Run Environment Setup Script (env-setup.sh)
         run: |
-          mkdir -p ~/.m2
-          echo "<settings>
-                  <servers>
-                    <server>
-                      <id>hello-world-matrix</id>
-                      <username>${{ secrets.JFROG_USERNAME }}</username>
-                      <password>${{ secrets.JFROG_API_KEY }}</password>
-                    </server>
-                  </servers>
-                </settings>" > ~/.m2/settings.xml   
-        
-    - name: Build with Maven
-      run: mvn clean deploy
+          chmod +x ./env-setup.sh
+          ./env-setup.sh  # This sets up Java, Maven, etc.
+
+      - name: Build with Maven
+        run: mvn clean install -DskipTests
+        if: ${{ github.event_name != 'pull_request' }}  # Only run on push events, skip for PR
+
+      - name: Run Unit Tests with Maven
+        run: mvn test
+        if: ${{ success() }}  # Run this step only if the previous build step succeeded
+
+  # Sequential Jobs: SonarQube Analysis and Artifact Upload
+  sonar_analysis:
+    # This job will also run on the self-hosted runner with the "staging" label.
+    # Ensure the staging runner has the "staging" label.
+    runs-on: [self-hosted, staging]  # Self-hosted EC2 with Tomcat installed (Staging)
+    needs: build_and_test
+    if: ${{ needs.build_and_test.result == 'success' }}  # Run only if build and test succeed
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Run SonarQube analysis
+        uses: SonarSource/sonarcloud-github-action@v1
+        with:
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
+          sonar-host-url: 'https://sonarcloud.io'
+
+  upload_artifact:
+    # This job will also run on the self-hosted runner with the "staging" label.
+    # Ensure the staging runner has the "staging" label.
+    runs-on: [self-hosted, staging]  # Self-hosted EC2 with Tomcat installed (Staging)
+    needs: build_and_test
+    if: ${{ needs.build_and_test.result == 'success' }}  # Run only if build and test succeed
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Upload Artifact to JFrog Artifactory
+        run: |
+          echo "Uploading artifact to JFrog Artifactory..."
+          curl -u "${{ secrets.JFROG_USERNAME }}:${{ secrets.JFROG_API_KEY }}" \
+               -T target/my-helloworld.war \
+               "http://13.127.169.215:8082/artifactory/hello-world-matrix-libs-release/-${{ needs.build_and_test.outputs.version }}.war"

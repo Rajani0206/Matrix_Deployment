@@ -66,15 +66,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-     - name: Configure Maven settings
-      runs-on: [self-hosted, staging]
+      - name: Configure Maven settings
+        runs-on: [self-hosted, staging]
           mkdir -p ~/.m2
           echo "<settings>
                   <servers>
                     <server>
-                      <id>hello_world_war</id>
-                      <username>${{ secrets.ARTIFACTORY_USERNAME }}</username>
-                      <password>${{ secrets.ARTIFACTORY_API_KEY }}</password>
+                      <id>hello-world-matrix</id>
+                      <username>${{ secrets.JFROG_USERNAME }}</username>
+                      <password>${{ secrets.JFROG_API_KEY }}</password>
                     </server>
                   </servers>
                 </settings>" > ~/.m2/settings.xml   

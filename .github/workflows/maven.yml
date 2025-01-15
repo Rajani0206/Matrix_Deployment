@@ -15,8 +15,8 @@ on:
 jobs:
   build:
     runs-on: [self-hosted, staging]
-    - name: Configure Maven settings
-      run: |
+      - name: Configure Maven settings
+        run: |
           mkdir -p ~/.m2
           echo "<settings>
                   <servers>

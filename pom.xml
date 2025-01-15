@@ -17,6 +17,13 @@
             <version>4.0.1</version>
             <scope>provided</scope>
         </dependency>
+         <distributionManagement>
+             <repository>
+                 <id>hello-world-matrix</id>
+                 <name>ip-172-31-32-57-releases</name>
+                 <url>http://13.127.169.215:8081/artifactory/hello-world-matrix-libs-release</url>
+             </repository>
+         </distributionManagement>
 
         <!-- JUnit Dependency for Unit Testing -->
         <dependency>

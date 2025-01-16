@@ -10,8 +10,8 @@
     <packaging>war</packaging>
     <distributionManagement>
     <repository>
-        <id>central</id>
-        <name>ip-172-31-32-57-releases</name>
+        <id>hello-world-matrix</id>
+        <name>hello-world-matrix-libs-release</name>
         <url>http://13.233.216.72:8081/artifactory/hello-world-matrix-libs-release</url>
     </repository>
 </distributionManagement>

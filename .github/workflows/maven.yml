@@ -79,9 +79,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Upload Artifact to JFrog Artifactory
+      
+      - name: Configure Maven settings
         run: |
           echo "Uploading artifact to JFrog Artifactory..."
-          curl -u "${{ secrets.JFROG_USERNAME }}:${{ secrets.JFROG_API_KEY }}" \
-               -T target/my-helloworld.war \
-               "http://13.127.169.215:8082/artifactory/hello-world-matrix-libs-release/-${{ needs.build_and_test.outputs.version }}.war"
+          mkdir -p ~/.m2
+          echo "<settings>
+                  <servers>
+                    <server>
+                      <id>central</id>
+                      <username>${{ secrets.JFROG_USERNAME }}</username>
+                      <password>${{ secrets.JFROG_API_KEY }}</password>
+                    </server>
+                  </servers>
+                </settings>" > ~/.m2/settings.xml
+
+           mvn clean deploy   

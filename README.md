@@ -1,3 +1,2 @@
 # Matrix_Deployment
-#staging
-#
+# Build,test,sonar qube analysis in staging

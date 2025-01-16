@@ -53,7 +53,7 @@ jobs:
       - name: SonarCloud Analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_ORG: your-organization # Replace with your actual SonarCloud organization
+          SONAR_ORG: Matrix_Deployment # Replace with your actual SonarCloud organization
           SONAR_HOST_URL: https://sonarcloud.io
         run: |
           mvn clean verify sonar:sonar \
